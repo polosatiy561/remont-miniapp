@@ -140,6 +140,13 @@
     </div>
 
     <script>
+        // Инициализация Telegram WebApp
+        let tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand(); // Растягиваем на весь экран
+            tg.ready();  // Сообщаем, что приложение готово
+        }
+        
         const PRICES = {
             steel_acryl_150: 7500,
             steel_marble_150: 8500,
@@ -218,10 +225,12 @@
                 total: document.getElementById('total-price').innerText
             };
             
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.sendData(JSON.stringify(data));
-                Telegram.WebApp.close();
+            // Отправляем данные в Telegram
+            if (tg) {
+                tg.sendData(JSON.stringify(data));
+                tg.close();
             } else {
+                // Если открыто в браузере
                 navigator.clipboard.writeText(JSON.stringify(data, null, 2));
                 alert('✅ Данные скопированы! Отправьте их мастеру в Telegram.\n\nСпасибо за обращение!');
             }
