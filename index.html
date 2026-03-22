@@ -2,197 +2,65 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Смета ремонта</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест WebApp</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; padding: 16px; }
-        .card { background: white; border-radius: 20px; padding: 20px; max-width: 500px; margin: 0 auto; }
-        button { background: #e67e22; color: white; border: none; padding: 14px 20px; border-radius: 40px; font-size: 16px; font-weight: bold; width: 100%; margin-top: 20px; cursor: pointer; }
-        .option-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
-        .option-btn { background: #f0f0f0; border: none; padding: 10px 16px; border-radius: 30px; cursor: pointer; font-size: 14px; }
-        .option-btn.active { background: #e67e22; color: white; }
-        .section-title { font-weight: bold; margin-top: 16px; margin-bottom: 8px; color: #2c3e50; border-left: 3px solid #e67e22; padding-left: 10px; }
-        .price-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .total-row { font-weight: bold; font-size: 18px; border-top: 2px solid #e67e22; padding-top: 12px; margin-top: 12px; color: #e67e22; }
-        .debug { 
-            background: #f8f9fa; 
-            padding: 10px; 
-            font-size: 12px; 
-            margin-top: 20px; 
-            border-radius: 8px; 
-            word-break: break-all;
-            font-family: monospace;
-            border: 1px solid #ddd;
-            color: #333;
-        }
-        .debug-success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
-        .debug-error { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-        h2 { color: #2c3e50; margin-bottom: 8px; }
-        .subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 16px; }
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        button { background: #e67e22; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 30px; margin-top: 20px; }
+        .status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 10px; }
+        .green { background: #d4edda; color: #155724; }
+        .red { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
-<div class="card">
-    <h2>🔨 Смета ремонта</h2>
-    <div class="subtitle">г. Кувандык | Илья и Руслан</div>
-    
-    <div class="section-title">🛁 Материал ванны</div>
-    <div class="option-group" id="material-group">
-        <button class="option-btn" data-value="steel">Стальная</button>
-        <button class="option-btn" data-value="cast_iron">Чугунная</button>
-    </div>
-    
-    <div class="section-title">📏 Длина</div>
-    <div class="option-group" id="length-group">
-        <button class="option-btn" data-value="150">1.5 м</button>
-        <button class="option-btn" data-value="170">1.7 м (+15%)</button>
-    </div>
-    
-    <div class="section-title">🎨 Покрытие</div>
-    <div class="option-group" id="coating-group">
-        <button class="option-btn" data-value="acryl">Акрил</button>
-        <button class="option-btn" data-value="marble">Литьевой мрамор</button>
-    </div>
-    
-    <div class="section-title">🔄 Замена сифона</div>
-    <div class="option-group" id="siphon-group">
-        <button class="option-btn" data-value="no">Не нужно</button>
-        <button class="option-btn" data-value="yes">Да (+500 ₽)</button>
-    </div>
-    
-    <div class="section-title">🎁 Скидки (суммируются)</div>
-    <div class="option-group" id="discount-group">
-        <button class="option-btn" data-value="none">Нет скидки</button>
-        <button class="option-btn" data-value="pensioner">Пенсионер (-10%)</button>
-        <button class="option-btn" data-value="repeat">Повторный заказ (-5%)</button>
-        <button class="option-btn" data-value="both">Обе скидки (-15%)</button>
-    </div>
-    
-    <div class="price-row"><span>💰 Базовая стоимость:</span><span id="base-price">0 ₽</span></div>
-    <div class="price-row" id="extra-row" style="display:none;"><span>📏 Наценка за 1.7 м:</span><span id="extra-price">0 ₽</span></div>
-    <div class="price-row" id="siphon-row" style="display:none;"><span>🔄 Замена сифона:</span><span id="siphon-price">0 ₽</span></div>
-    <div class="price-row" id="discount-row" style="display:none;"><span>🎁 Скидка:</span><span id="discount-price">0 ₽</span></div>
-    <div class="total-row"><span>🔹 ИТОГО РАБОТЫ:</span><span id="total-price">0 ₽</span></div>
-    
-    <button id="send-btn">📞 Отправить заявку мастеру</button>
-    
-    <div id="debug" class="debug">⏳ Проверка подключения...</div>
-    <div class="note" style="font-size: 11px; color: #888; text-align: center; margin-top: 12px;">
-        Материал сифона оплачивается отдельно (~1000 ₽)<br>
-        Для нестандартных ванн — отправьте фото мастеру
-    </div>
-</div>
+    <h2>🔨 Тест WebApp</h2>
+    <p>Нажмите кнопку для отправки тестовых данных</p>
+    <button id="test-btn">📤 Отправить тест</button>
+    <div id="status" class="status">⏳ Проверка...</div>
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script>
-    const PRICES = {
-        steel_acryl_150: 7500, steel_marble_150: 8500,
-        cast_iron_acryl_150: 8000, cast_iron_marble_150: 9000
-    };
-    
-    let state = { material: 'steel', length: '150', coating: 'acryl', siphon: 'no', discount: 'none' };
-    let tg = null;
-    const debugDiv = document.getElementById('debug');
-    
-    function debug(msg, isError = false) {
-        debugDiv.innerHTML = msg;
-        debugDiv.className = 'debug ' + (isError ? 'debug-error' : 'debug-success');
-        console.log(msg);
-    }
-    
-    // Проверяем Telegram WebApp
-    setTimeout(() => {
-        tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.expand();
-            tg.ready();
-            debug('✅ Telegram WebApp: ПОДКЛЮЧЕН! Данные будут отправляться автоматически.');
-        } else {
-            debug('⚠️ Telegram WebApp: НЕ НАЙДЕН. Работаем в браузере. Данные будут копироваться в буфер.', true);
-        }
-    }, 200);
-    
-    function calculate() {
-        let basePrice = 0;
-        if (state.material === 'steel') {
-            basePrice = state.coating === 'acryl' ? PRICES.steel_acryl_150 : PRICES.steel_marble_150;
-        } else {
-            basePrice = state.coating === 'acryl' ? PRICES.cast_iron_acryl_150 : PRICES.cast_iron_marble_150;
-        }
+    <script>
+        const statusDiv = document.getElementById('status');
+        let tg = null;
         
-        let extraCharge = state.length === '170' ? basePrice * 0.15 : 0;
-        let priceAfterLength = basePrice + extraCharge;
-        let siphonPrice = state.siphon === 'yes' ? 500 : 0;
-        
-        let discountPercent = 0;
-        if (state.discount === 'pensioner') discountPercent = 10;
-        else if (state.discount === 'repeat') discountPercent = 5;
-        else if (state.discount === 'both') discountPercent = 15;
-        
-        let discountAmount = priceAfterLength * discountPercent / 100;
-        let total = priceAfterLength - discountAmount + siphonPrice;
-        
-        document.getElementById('base-price').innerHTML = basePrice.toLocaleString() + ' ₽';
-        document.getElementById('extra-row').style.display = extraCharge > 0 ? 'flex' : 'none';
-        document.getElementById('extra-price').innerHTML = extraCharge.toLocaleString() + ' ₽';
-        document.getElementById('siphon-row').style.display = siphonPrice > 0 ? 'flex' : 'none';
-        document.getElementById('siphon-price').innerHTML = siphonPrice.toLocaleString() + ' ₽';
-        document.getElementById('discount-row').style.display = discountAmount > 0 ? 'flex' : 'none';
-        document.getElementById('discount-price').innerHTML = '-' + discountAmount.toLocaleString() + ' ₽';
-        document.getElementById('total-price').innerHTML = total.toLocaleString() + ' ₽';
-    }
-    
-    function setupGroup(groupId, paramName) {
-        document.querySelectorAll(`#${groupId} .option-btn`).forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll(`#${groupId} .option-btn`).forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                state[paramName] = btn.dataset.value;
-                calculate();
-            });
-            if (btn.dataset.value === state[paramName]) btn.classList.add('active');
-        });
-    }
-    
-    setupGroup('material-group', 'material');
-    setupGroup('length-group', 'length');
-    setupGroup('coating-group', 'coating');
-    setupGroup('siphon-group', 'siphon');
-    setupGroup('discount-group', 'discount');
-    
-    document.getElementById('send-btn').onclick = () => {
-        const data = {
-            type: 'estimate',
-            material: state.material,
-            length: state.length,
-            coating: state.coating,
-            siphon: state.siphon,
-            discount: state.discount,
-            total: document.getElementById('total-price').innerText
-        };
-        const jsonData = JSON.stringify(data);
-        
-        debug('📤 Отправка: ' + jsonData);
-        
-        if (tg) {
-            try {
-                tg.sendData(jsonData);
-                debug('✅ Данные отправлены в Telegram! Приложение закроется.');
-                setTimeout(() => tg.close(), 500);
-            } catch(e) {
-                debug('❌ Ошибка отправки: ' + e.message, true);
-                navigator.clipboard.writeText(jsonData);
-                alert('❌ Ошибка отправки. Данные скопированы в буфер.\n\nОтправьте их мастеру в Telegram.');
+        // Проверяем Telegram
+        setTimeout(() => {
+            tg = window.Telegram?.WebApp;
+            if (tg) {
+                tg.expand();
+                tg.ready();
+                statusDiv.innerHTML = '✅ Telegram WebApp: ПОДКЛЮЧЕН!';
+                statusDiv.className = 'status green';
+            } else {
+                statusDiv.innerHTML = '⚠️ Telegram WebApp: НЕ НАЙДЕН';
+                statusDiv.className = 'status red';
             }
-        } else {
-            navigator.clipboard.writeText(jsonData);
-            debug('📋 Данные скопированы в буфер обмена (работа в браузере)');
-            alert('✅ Данные скопированы! Отправьте их мастеру в Telegram.\n\nСпасибо за обращение!');
-        }
-    };
-    
-    calculate();
-</script>
+        }, 200);
+        
+        document.getElementById('test-btn').onclick = () => {
+            const testData = JSON.stringify({
+                type: 'test',
+                message: 'Это тестовое сообщение из WebApp',
+                time: new Date().toLocaleString()
+            });
+            
+            statusDiv.innerHTML = '📤 Отправка данных...';
+            
+            if (tg) {
+                try {
+                    tg.sendData(testData);
+                    statusDiv.innerHTML = '✅ Данные отправлены! Приложение закроется.';
+                    setTimeout(() => tg.close(), 500);
+                } catch(e) {
+                    statusDiv.innerHTML = '❌ Ошибка: ' + e.message;
+                    statusDiv.className = 'status red';
+                }
+            } else {
+                navigator.clipboard.writeText(testData);
+                statusDiv.innerHTML = '📋 Данные скопированы в буфер (нет WebApp)';
+                alert('Данные скопированы:\n' + testData);
+            }
+        };
+    </script>
 </body>
-        </html>
+</html>
