@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Смета ремонта | Кувандык</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 16px;
+            padding-bottom: 32px;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        h1 { font-size: 24px; color: #2c3e50; margin-bottom: 8px; }
+        .subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 20px; }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e67e22;
+        }
+        .option-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .option-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-btn.active { background: #e67e22; color: white; }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 0;
+            margin-top: 16px;
+            border-top: 2px solid #e67e22;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        button.send-btn {
+            width: 100%;
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        .note { font-size: 12px; color: #7f8c8d; text-align: center; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔨 Смета ремонта</h1>
+            <div class="subtitle">г. Кувандык | Мастера Илья и Руслан</div>
+            
+            <div class="section-title">🛁 Материал ванны</div>
+            <div class="option-group" id="material-group">
+                <button class="option-btn" data-value="steel">Стальная</button>
+                <button class="option-btn" data-value="cast_iron">Чугунная</button>
+                <button class="option-btn" data-value="other">Другая (по фото)</button>
+            </div>
+            
+            <div class="section-title">📏 Длина</div>
+            <div class="option-group" id="length-group">
+                <button class="option-btn" data-value="150">1.5 м</button>
+                <button class="option-btn" data-value="170">1.7 м (+15%)</button>
+            </div>
+            
+            <div class="section-title">🎨 Покрытие</div>
+            <div class="option-group" id="coating-group">
+                <button class="option-btn" data-value="acryl">Акрил</button>
+                <button class="option-btn" data-value="marble">Литьевой мрамор</button>
+            </div>
+            
+            <div class="section-title">🔄 Замена сифона</div>
+            <div class="option-group" id="siphon-group">
+                <button class="option-btn" data-value="no">Не нужно</button>
+                <button class="option-btn" data-value="yes">Да (+500 ₽)</button>
+            </div>
+            
+            <div class="section-title">🎁 Скидки (суммируются)</div>
+            <div class="option-group" id="discount-group">
+                <button class="option-btn" data-value="none">Нет скидки</button>
+                <button class="option-btn" data-value="pensioner">Пенсионер (-10%)</button>
+                <button class="option-btn" data-value="repeat">Повторный заказ (-5%)</button>
+                <button class="option-btn" data-value="both">Обе скидки (-15%)</button>
+            </div>
+            
+            <div class="price-row">
+                <span>💰 Базовая стоимость:</span>
+                <span id="base-price">0 ₽</span>
+            </div>
+            <div class="price-row" id="extra-row" style="display:none;">
+                <span>📏 Наценка за 1.7 м:</span>
+                <span id="extra-price">0 ₽</span>
+            </div>
+            <div class="price-row" id="siphon-row" style="display:none;">
+                <span>🔄 Замена сифона:</span>
+                <span id="siphon-price">0 ₽</span>
+            </div>
+            <div class="price-row" id="discount-row" style="display:none;">
+                <span>🎁 Скидка:</span>
+                <span id="discount-price">0 ₽</span>
+            </div>
+            <div class="total-row">
+                <span>🔹 ИТОГО РАБОТЫ:</span>
+                <span id="total-price" style="color:#e67e22;">0 ₽</span>
+            </div>
+            
+            <button class="send-btn" id="send-btn">📞 Отправить заявку мастеру</button>
+            <div class="note">
+                Материал сифона оплачивается отдельно (~1000 ₽ при необходимости)<br>
+                Для нестандартных ванн — отправьте фото мастеру
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PRICES = {
+            steel_acryl_150: 7500,
+            steel_marble_150: 8500,
+            cast_iron_acryl_150: 8000,
+            cast_iron_marble_150: 9000
+        };
+        
+        let state = {
+            material: 'steel',
+            length: '150',
+            coating: 'acryl',
+            siphon: 'no',
+            discount: 'none'
+        };
+        
+        function calculate() {
+            let basePrice = 0;
+            if (state.material === 'steel') {
+                basePrice = state.coating === 'acryl' ? PRICES.steel_acryl_150 : PRICES.steel_marble_150;
+            } else if (state.material === 'cast_iron') {
+                basePrice = state.coating === 'acryl' ? PRICES.cast_iron_acryl_150 : PRICES.cast_iron_marble_150;
+            } else {
+                document.getElementById('base-price').innerText = 'индивидуально';
+                document.getElementById('total-price').innerText = 'по фото';
+                return;
+            }
+            
+            let extraCharge = state.length === '170' ? basePrice * 0.15 : 0;
+            let priceAfterLength = basePrice + extraCharge;
+            let siphonPrice = state.siphon === 'yes' ? 500 : 0;
+            
+            let discountPercent = 0;
+            if (state.discount === 'pensioner') discountPercent = 10;
+            else if (state.discount === 'repeat') discountPercent = 5;
+            else if (state.discount === 'both') discountPercent = 15;
+            
+            let discountAmount = priceAfterLength * discountPercent / 100;
+            let total = priceAfterLength - discountAmount + siphonPrice;
+            
+            document.getElementById('base-price').innerText = basePrice.toLocaleString() + ' ₽';
+            document.getElementById('extra-row').style.display = extraCharge > 0 ? 'flex' : 'none';
+            document.getElementById('extra-price').innerText = extraCharge.toLocaleString() + ' ₽';
+            document.getElementById('siphon-row').style.display = siphonPrice > 0 ? 'flex' : 'none';
+            document.getElementById('siphon-price').innerText = siphonPrice.toLocaleString() + ' ₽';
+            document.getElementById('discount-row').style.display = discountAmount > 0 ? 'flex' : 'none';
+            document.getElementById('discount-price').innerText = '-' + discountAmount.toLocaleString() + ' ₽';
+            document.getElementById('total-price').innerText = total.toLocaleString() + ' ₽';
+        }
+        
+        function setupGroup(groupId, paramName) {
+            document.querySelectorAll(`#${groupId} .option-btn`).forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll(`#${groupId} .option-btn`).forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state[paramName] = btn.dataset.value;
+                    calculate();
+                });
+                if (btn.dataset.value === state[paramName]) btn.classList.add('active');
+            });
+        }
+        
+        setupGroup('material-group', 'material');
+        setupGroup('length-group', 'length');
+        setupGroup('coating-group', 'coating');
+        setupGroup('siphon-group', 'siphon');
+        setupGroup('discount-group', 'discount');
+        
+        document.getElementById('send-btn').addEventListener('click', () => {
+            const data = {
+                type: 'estimate',
+                material: state.material,
+                length: state.length,
+                coating: state.coating,
+                siphon: state.siphon,
+                discount: state.discount,
+                total: document.getElementById('total-price').innerText
+            };
+            
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.sendData(JSON.stringify(data));
+                Telegram.WebApp.close();
+            } else {
+                navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+                alert('✅ Данные скопированы! Отправьте их мастеру в Telegram.\n\nСпасибо за обращение!');
+            }
+        });
+        
+        calculate();
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</body>
+</html>
