@@ -173,20 +173,6 @@
         let tg = null;
         const statusDiv = document.getElementById('status');
         
-        // Инициализация WebApp
-        setTimeout(() => {
-            tg = window.Telegram?.WebApp;
-            if (tg) {
-                tg.expand();
-                tg.ready();
-                showStatus('✅ Telegram WebApp: подключен', 'success');
-                console.log('✅ Telegram WebApp инициализирован');
-            } else {
-                showStatus('⚠️ Telegram WebApp: не найден (работаем в браузере)', 'error');
-                console.log('⚠️ Telegram WebApp не найден');
-            }
-        }, 100);
-        
         function showStatus(msg, type) {
             statusDiv.textContent = msg;
             statusDiv.className = 'status ' + type;
@@ -197,6 +183,20 @@
                 }
             }, 3000);
         }
+        
+        // Инициализация WebApp
+        setTimeout(() => {
+            tg = window.Telegram?.WebApp;
+            if (tg) {
+                tg.expand();
+                tg.ready();
+                showStatus('✅ Telegram WebApp: подключен', 'success');
+                console.log('✅ Telegram WebApp инициализирован');
+            } else {
+                showStatus('⚠️ Telegram WebApp: не найден', 'error');
+                console.log('⚠️ Telegram WebApp не найден');
+            }
+        }, 100);
         
         // Расчет стоимости
         function calculate() {
@@ -265,29 +265,25 @@
             };
             
             const jsonData = JSON.stringify(data);
-            console.log('📤 Отправка данных:', jsonData);
+            console.log('📤 Отправка:', jsonData);
             
             if (tg) {
                 try {
                     tg.sendData(jsonData);
-                    console.log('📤 Отправляем:', jsonData);
-                    tg.sendData(jsonData);
-                    console.log('✅ Данные отправлены');
-                    showStatus('✅ Заявка отправлена! Спасибо!', 'success');
+                    showStatus('✅ Заявка отправлена!', 'success');
                     setTimeout(() => tg.close(), 1000);
                 } catch (e) {
-                    console.error('❌ Ошибка отправки:', e);
+                    console.error('❌ Ошибка:', e);
                     showStatus('❌ Ошибка: ' + e.message, 'error');
-                    navigator.clipboard.writeText(jsonData);
                 }
             } else {
                 navigator.clipboard.writeText(jsonData);
-                showStatus('📋 Данные скопированы! Отправьте мастеру в Telegram.', 'info');
-                alert('✅ Данные скопированы! Отправьте их мастеру в Telegram.\n\nСпасибо за обращение!');
+                showStatus('📋 Данные скопированы', 'info');
+                alert('Данные скопированы в буфер обмена');
             }
         });
         
         calculate();
     </script>
 </body>
-</html>
+    </html>
