@@ -270,6 +270,9 @@
             if (tg) {
                 try {
                     tg.sendData(jsonData);
+                    console.log('📤 Отправляем:', jsonData);
+                    tg.sendData(jsonData);
+                    console.log('✅ Данные отправлены');
                     showStatus('✅ Заявка отправлена! Спасибо!', 'success');
                     setTimeout(() => tg.close(), 1000);
                 } catch (e) {
