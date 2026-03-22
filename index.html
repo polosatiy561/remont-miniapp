@@ -69,6 +69,15 @@
             margin-top: 16px;
         }
         .note { font-size: 12px; color: #7f8c8d; text-align: center; margin-top: 16px; }
+        .success-msg {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 16px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -132,6 +141,7 @@
             </div>
             
             <button class="send-btn" id="send-btn">📞 Отправить заявку мастеру</button>
+            <div id="success-msg" class="success-msg">✅ Заявка отправлена! Мастер свяжется с вами.</div>
             <div class="note">
                 Материал сифона оплачивается отдельно (~1000 ₽ при необходимости)<br>
                 Для нестандартных ванн — отправьте фото мастеру
@@ -139,13 +149,19 @@
         </div>
     </div>
 
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // Инициализация Telegram WebApp
-        let tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.expand(); // Растягиваем на весь экран
-            tg.ready();  // Сообщаем, что приложение готово
-        }
+        // Ждем загрузки скрипта
+        setTimeout(() => {
+            const tg = window.Telegram?.WebApp;
+            if (tg) {
+                tg.expand();
+                tg.ready();
+                console.log('✅ Telegram WebApp инициализирован');
+            } else {
+                console.log('⚠️ Telegram WebApp не найден, работаем в браузере');
+            }
+        }, 100);
         
         const PRICES = {
             steel_acryl_150: 7500,
@@ -225,12 +241,18 @@
                 total: document.getElementById('total-price').innerText
             };
             
-            // Отправляем данные в Telegram
+            const tg = window.Telegram?.WebApp;
+            
             if (tg) {
+                // Отправляем в Telegram
                 tg.sendData(JSON.stringify(data));
                 tg.close();
+                document.getElementById('success-msg').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('success-msg').style.display = 'none';
+                }, 3000);
             } else {
-                // Если открыто в браузере
+                // Если не в Telegram — копируем
                 navigator.clipboard.writeText(JSON.stringify(data, null, 2));
                 alert('✅ Данные скопированы! Отправьте их мастеру в Telegram.\n\nСпасибо за обращение!');
             }
@@ -238,6 +260,5 @@
         
         calculate();
     </script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body>
-</html>
+    </html>
