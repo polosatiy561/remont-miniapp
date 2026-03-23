@@ -29,7 +29,7 @@
             border-radius: 28px;
             padding: 24px;
             margin-bottom: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
         
         h1 {
@@ -110,6 +110,48 @@
             font-size: 24px;
         }
         
+        /* Стили для формы */
+        .form-group {
+            margin: 20px 0;
+        }
+        
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            background: #f8fafc;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #e67e22;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+        }
+        
+        .form-input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+        
         .send-btn {
             width: 100%;
             background: #e67e22;
@@ -128,6 +170,12 @@
         .send-btn:active {
             transform: scale(0.98);
             background: #d97316;
+        }
+        
+        .send-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .note {
@@ -174,6 +222,23 @@
             border-radius: 20px;
             margin-left: 8px;
         }
+        
+        /* Анимация загрузки */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -184,8 +249,21 @@
                 Смета ремонта
             </h1>
             <div class="subtitle">
-                📍 г. Кувандык |
-                <span class="badge">Работаю с 2023</span>
+                📍 г. Кувандык | 
+                <span class="badge">Работаем с 2023</span>
+            </div>
+            
+            <!-- ФОРМА КОНТАКТНЫХ ДАННЫХ -->
+            <div class="form-group">
+                <div class="form-label">👤 Ваше имя</div>
+                <input type="text" id="client-name" class="form-input" placeholder="Как к вам обращаться?" autocomplete="name">
+                <div id="name-error" class="error-message">Пожалуйста, введите ваше имя</div>
+            </div>
+            
+            <div class="form-group">
+                <div class="form-label">📞 Номер телефона</div>
+                <input type="tel" id="client-phone" class="form-input" placeholder="+7 (___) ___-__-__" autocomplete="tel">
+                <div id="phone-error" class="error-message">Введите корректный номер телефона (например, +79001234567)</div>
             </div>
             
             <div class="section-title">🛁 Материал ванны</div>
@@ -241,11 +319,12 @@
                 <span id="total-price">0 ₽</span>
             </div>
             
-            <button class="send-btn" id="send-btn">📞 Отправить заявку мастеру</button>
+            <button class="send-btn" id="send-btn">📞 Отправить заявку</button>
             <div id="status" class="status"></div>
             <div class="note">
                 💡 Материал сифона оплачивается отдельно (~1000 ₽ при необходимости)<br>
-                📸 Для нестандартных ванн — отправьте фото мастеру
+                📸 Для нестандартных ванн — отправьте фото мастеру<br>
+                🔒 Ваши данные передаются только мастеру
             </div>
         </div>
     </div>
@@ -268,6 +347,7 @@
         
         let tg = null;
         const statusDiv = document.getElementById('status');
+        const sendBtn = document.getElementById('send-btn');
         
         function showStatus(msg, type) {
             statusDiv.textContent = msg;
@@ -277,7 +357,67 @@
                     statusDiv.style.display = 'none';
                     statusDiv.className = 'status';
                 }
-            }, 3000);
+            }, 5000);
+        }
+        
+        // Валидация телефона (российский формат)
+        function validatePhone(phone) {
+            const cleaned = phone.replace(/[^\d+]/g, '');
+            const patterns = [
+                /^\+7\d{10}$/,      // +7XXXXXXXXXX
+                /^8\d{10}$/,        // 8XXXXXXXXXX
+                /^7\d{10}$/,        // 7XXXXXXXXXX
+                /^\d{10}$/          // XXXXXXXXXX
+            ];
+            return patterns.some(p => p.test(cleaned));
+        }
+        
+        function formatPhone(phone) {
+            const cleaned = phone.replace(/[^\d]/g, '');
+            if (cleaned.length === 11 && cleaned.startsWith('7')) {
+                return '+' + cleaned;
+            }
+            if (cleaned.length === 11 && cleaned.startsWith('8')) {
+                return '+7' + cleaned.slice(1);
+            }
+            if (cleaned.length === 10) {
+                return '+7' + cleaned;
+            }
+            return phone;
+        }
+        
+        function validateForm() {
+            const name = document.getElementById('client-name').value.trim();
+            const phoneRaw = document.getElementById('client-phone').value.trim();
+            const nameError = document.getElementById('name-error');
+            const phoneError = document.getElementById('phone-error');
+            let isValid = true;
+            
+            if (!name) {
+                nameError.style.display = 'block';
+                document.getElementById('client-name').classList.add('error');
+                isValid = false;
+            } else {
+                nameError.style.display = 'none';
+                document.getElementById('client-name').classList.remove('error');
+            }
+            
+            if (!phoneRaw) {
+                phoneError.textContent = 'Введите номер телефона';
+                phoneError.style.display = 'block';
+                document.getElementById('client-phone').classList.add('error');
+                isValid = false;
+            } else if (!validatePhone(phoneRaw)) {
+                phoneError.textContent = 'Введите корректный номер (например, +79001234567)';
+                phoneError.style.display = 'block';
+                document.getElementById('client-phone').classList.add('error');
+                isValid = false;
+            } else {
+                phoneError.style.display = 'none';
+                document.getElementById('client-phone').classList.remove('error');
+            }
+            
+            return isValid;
         }
         
         setTimeout(() => {
@@ -341,9 +481,20 @@
         setupGroup('siphon-group', 'siphon');
         setupGroup('discount-group', 'discount');
         
-        document.getElementById('send-btn').addEventListener('click', () => {
+        sendBtn.addEventListener('click', async () => {
+            if (!validateForm()) {
+                showStatus('❌ Пожалуйста, заполните все поля', 'error');
+                return;
+            }
+            
+            const name = document.getElementById('client-name').value.trim();
+            const phoneRaw = document.getElementById('client-phone').value.trim();
+            const phone = formatPhone(phoneRaw);
+            
             const data = {
                 type: 'estimate',
+                client_name: name,
+                client_phone: phone,
                 material: state.material,
                 length: state.length,
                 coating: state.coating,
@@ -355,6 +506,11 @@
             const jsonData = JSON.stringify(data);
             console.log('📤 Отправка:', jsonData);
             
+            // Показываем загрузку
+            const originalText = sendBtn.innerHTML;
+            sendBtn.innerHTML = '<span class="loading"></span> Отправка...';
+            sendBtn.disabled = true;
+            
             if (tg) {
                 try {
                     tg.sendData(jsonData);
@@ -363,11 +519,15 @@
                 } catch (e) {
                     console.error('❌ Ошибка:', e);
                     showStatus('❌ Ошибка: ' + e.message, 'error');
+                    sendBtn.innerHTML = originalText;
+                    sendBtn.disabled = false;
                 }
             } else {
                 navigator.clipboard.writeText(jsonData);
                 showStatus('📋 Данные скопированы! Отправьте мастеру в Telegram.', 'info');
                 alert('✅ Данные скопированы!\n\nОтправьте их мастеру в Telegram.\n\nСпасибо за обращение!');
+                sendBtn.innerHTML = originalText;
+                sendBtn.disabled = false;
             }
         });
         
